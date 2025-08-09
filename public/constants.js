@@ -6,3 +6,10 @@ const TILE_TYPES = {
     START_FLAG: 4,
     END_FLAG: 5
 };
+
+const vectors = [
+    [1, 0],
+    [0, 1],
+    [-1, 0],
+    [0, -1]
+]
