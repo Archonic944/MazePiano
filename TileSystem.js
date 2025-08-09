@@ -15,7 +15,9 @@ class TileSystem {
         const spriteData = [
             { type: TILE_TYPES.STONE, filename: 'stone.png' },
             { type: TILE_TYPES.COIN, filename: 'coin.png' },
-            { type: TILE_TYPES.SPIKE, filename: 'spike.png' }
+            { type: TILE_TYPES.SPIKE, filename: 'spike.png' },
+            { type: TILE_TYPES.START_FLAG, filename: 'banner_red.png' },
+            { type: TILE_TYPES.END_FLAG, filename: 'banner_green.png' }
         ];
 
         spriteData.forEach(data => {
@@ -58,7 +60,7 @@ class TileSystem {
             [-1, 0],
             [0, -1]
         ]
-        
+
         // Create evenly spaced holes - first hole is at (1,1), not (0,0)
         for(let x = 1; x < CHAMBER_WIDTH - 1; x+=2){
             for(let y = 1; y < CHAMBER_HEIGHT - 1; y+=2){
@@ -88,6 +90,9 @@ class TileSystem {
             let vec = vectors[index];
             this.setTile(next[0] - vec[0], next[1] - vec[1], TILE_TYPES.AIR);
         }
+        this.setTile(1, 1, TILE_TYPES.START_FLAG);
+        this.setTile(CHAMBER_WIDTH - 2, CHAMBER_HEIGHT - 2, TILE_TYPES.END_FLAG);
+        this.setTile(CHAMBER_WIDTH - 1, CHAMBER_HEIGHT - 2, TILE_TYPES.AIR);
     }
 
 

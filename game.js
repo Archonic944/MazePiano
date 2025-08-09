@@ -4,9 +4,9 @@ const ctx = canvas.getContext('2d');
 
 class Game {
     constructor() {
-        this.player = new Player(400, 300);
         this.camera = new Camera();
         this.tileSystem = new TileSystem();
+        this.player = new Player(this.tileSystem.tileToWorld(1, 1).x, this.tileSystem.tileToWorld(1, 1).y);
         this.keys = {};
         this.init();
     }
