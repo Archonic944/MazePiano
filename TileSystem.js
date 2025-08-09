@@ -50,7 +50,15 @@ Continue in this manner recursively, until every chamber has a width of one cell
             this.setTile(CHAMBER_WIDTH, y, TILE_TYPES.STONE);
         }
         this.setTile(CHAMBER_WIDTH, CHAMBER_HEIGHT, TILE_TYPES.STONE); // Bottom right corner
-        this.divideChamber(0, 0, CHAMBER_WIDTH, CHAMBER_HEIGHT);
+        let chamberQueue = [[0, 0, CHAMBER_WIDTH, CHAMBER_HEIGHT]];
+        // Recursively divide chambers
+        while (chamberQueue.length > 0) {
+            const chamber = chamberQueue.shift();
+            const newChambers = this.divideChamber(...chamber);
+            if (newChambers) {
+                chamberQueue.push(...newChambers);
+            }
+        }
     }
 
     // Returns the result of randomly dividing this chamber in the form of 4 chambers: 4([x1,y1,x2,y2])
@@ -62,32 +70,32 @@ Continue in this manner recursively, until every chamber has a width of one cell
         let randY = Math.floor(Math.random() * (y2 - y1 - 2)) + y1 + 2;
         let randX = Math.floor(Math.random() * (x2 - x1 - 2)) + x1 + 2;
         let randomHoleLocations = [
-            [Math.floor(Math.random() * (x2 - x1 - 2)) + x1 + 2, randY],
-            [randX, Math.floor(Math.random() * (y2 - y1 - 2)) + y1 + 2],
-            [Math.floor(Math.random() * (x2 - x1 - 2)) + x1 + 2, randY],
-            [randX, Math.floor(Math.random() * (y2 - y1 - 2)) + y1 + 2]
+            [Math.floor(Math.random() * (randX - x1)) + x1, randY], // West wall
+            [Math.floor(Math.random() * (x2 - randX - 1)) + randX + 1, randY], // East wall
+            [randX, Math.floor(Math.random() * (randY - y1)) + y1], // North wall
+            [randX, Math.floor(Math.random() * (y2 - randY - 1)) + randY + 1] // South wall
         ];
         console.log(randomHoleLocations[0][0], randomHoleLocations[0][1], randomHoleLocations[1][0], randomHoleLocations[1][1], randomHoleLocations[2][0], randomHoleLocations[2][1], randomHoleLocations[3][0], randomHoleLocations[3][1]);
         randomHoleLocations.splice(Math.floor(Math.random() * 4), 1);
         const isHoleLocation = (x, y) => {
-        return randomHoleLocations.some(hole => hole[0] === x && hole[1] === y);
-    };
-    
-    for(let x = x1; x <= x2; x++){
-        console.log(x, randY);
-        if(isHoleLocation(x, randY)){
-           console.log("random hole locations includes ", x, randY);
-           continue;
-        }else{
-            console.log("random hole locations does not include ", x, randY);
+            return randomHoleLocations.some(hole => hole[0] === x && hole[1] === y);
+        };
+        
+        for(let x = x1; x <= x2; x++){
+            console.log(x, randY);
+            if(isHoleLocation(x, randY)){
+               console.log("random hole locations includes ", x, randY);
+               continue;
+            }else{
+                console.log("random hole locations does not include ", x, randY);
+            }
+            this.setTile(x, randY, TILE_TYPES.STONE);
         }
-        this.setTile(x, randY, TILE_TYPES.STONE);
-    }
-    for(let y = y1; y <= y2; y++){
-        console.log(randX, y);
-        if(isHoleLocation(randX, y)) continue;
-        this.setTile(randX, y, TILE_TYPES.STONE);
-    }
+        for(let y = y1; y <= y2; y++){
+            console.log(randX, y);
+            if(isHoleLocation(randX, y)) continue;
+            this.setTile(randX, y, TILE_TYPES.STONE);
+        }
         return [
             [x1, y1, randX, randY], // Top left
             [randX, y1, x2, randY], // Top right

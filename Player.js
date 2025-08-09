@@ -8,7 +8,7 @@ class Player {
     this.height = 32;
     this.hitboxWidth = 24; // Hitbox size
     this.hitboxHeight = 24;
-        this.speed = 200;
+        this.speed = 500;
         this.direction = 'down';
         this.isMoving = false;
         this.animationTime = 0;
@@ -108,6 +108,8 @@ class Player {
     }
 
     checkWallCollision(x, y, tileSystem) {
+        // TODO DEBUG
+        return false;
         // Check all four corners of the hitbox (smaller than sprite)
         const halfW = this.hitboxWidth / 2;
         const halfH = this.hitboxHeight / 2;
