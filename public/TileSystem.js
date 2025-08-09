@@ -166,14 +166,19 @@ class TileSystem {
         const endTileX = startTileX + Math.ceil(visibleWidth / this.tileSize) + 2;
         const endTileY = startTileY + Math.ceil(visibleHeight / this.tileSize) + 2;
 
-        // Render only visible tiles
+        // Render only visible and non-air tiles
         for (let tileX = startTileX; tileX <= endTileX; tileX++) {
             for (let tileY = startTileY; tileY <= endTileY; tileY++) {
-                const tileType = this.getTile(tileX, tileY);
-                
-                if (tileType !== TILE_TYPES.AIR) {
-                    const worldPos = this.tileToWorld(tileX, tileY);
-                    this.renderTile(ctx, worldPos.x, worldPos.y, tileType);
+                if (
+                    tileX >= 0 && tileX < this.revealedTiles.length &&
+                    tileY >= 0 && tileY < this.revealedTiles[0].length &&
+                    this.revealedTiles[tileX][tileY]
+                ) {
+                    const tileType = this.getTile(tileX, tileY);
+                    if (tileType !== TILE_TYPES.AIR) {
+                        const worldPos = this.tileToWorld(tileX, tileY);
+                        this.renderTile(ctx, worldPos.x, worldPos.y, tileType);
+                    }
                 }
             }
         }
