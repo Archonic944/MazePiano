@@ -10,6 +10,10 @@ class Game {
         this.keys = {};
         this.lightOverlay = new Image();
         this.lightOverlay.src = 'public/sprites/light_overlay_pngtree.png';
+    // HUD / coins
+    this.coinCount = 0;
+    this.coinSound = new Audio('public/sounds/coin_sfx.mp3');
+    this._wasDead = false;
         this.init();
     }
 
@@ -31,6 +35,20 @@ class Game {
     update() {
         this.player.update(this.keys, this.tileSystem);
         this.camera.follow(this.player);
+
+        // Handle coin pickup when player overlaps a coin tile
+        const centerTile = this.tileSystem.worldToTile(this.player.x, this.player.y);
+        if (this.tileSystem.getTile(centerTile.x, centerTile.y) === TILE_TYPES.COIN) {
+            this.tileSystem.setTile(centerTile.x, centerTile.y, TILE_TYPES.AIR);
+            this.coinCount += 1;
+            try { this.coinSound.currentTime = 0; this.coinSound.play(); } catch {}
+        }
+
+        // Reset coin counter on death (edge-triggered)
+        if (!this._wasDead && this.player.isDead) {
+            this.coinCount = 0;
+        }
+        this._wasDead = this.player.isDead;
     }
 
     render() {
@@ -46,6 +64,41 @@ class Game {
         this.player.render(ctx);
         
         ctx.restore();
+
+        // HUD overlay
+        this.renderCoinCounter();
+    }
+
+    renderCoinCounter() {
+        // Draw coin icon and count in top-right of the canvas (screen space)
+        const padding = 16;
+        const iconSize = 28;
+        const y = padding;
+        const text = 'x ' + this.coinCount;
+
+        // Reset transform to screen space
+        if (ctx.resetTransform) ctx.resetTransform();
+        else ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+        ctx.font = 'bold 20px Arial';
+        ctx.textBaseline = 'middle';
+
+        const textWidth = ctx.measureText(text).width;
+        const spacing = 8;
+        // Position so that [icon][space][text] touches right padding
+        const iconX = canvas.width - padding - textWidth - spacing - iconSize;
+        const textX = iconX + iconSize + spacing;
+
+        const coinSprite = this.tileSystem.sprites[TILE_TYPES.COIN];
+        if (coinSprite && coinSprite.complete) {
+            ctx.drawImage(coinSprite, iconX, y, iconSize, iconSize);
+        } else {
+            ctx.fillStyle = '#ffd700';
+            ctx.fillRect(iconX, y, iconSize, iconSize);
+        }
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'left';
+        ctx.fillText(text, textX, y + iconSize / 2);
     }
 
     renderLightOverlay() {

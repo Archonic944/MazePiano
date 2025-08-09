@@ -29,10 +29,14 @@ class TileSystem {
     }
 
     generateMaze() {
-        // Fill chamber with stone
+        // Fill chamber with stone (walls), with 5% chance for spikes
         for (let x = 0; x < CHAMBER_WIDTH; x++) {
-            for(let y = 0; y<CHAMBER_HEIGHT; y++){
-                this.setTile(x, y, TILE_TYPES.STONE);
+            for(let y = 0; y < CHAMBER_HEIGHT; y++){
+                if (Math.random() < 0.05) {
+                    this.setTile(x, y, TILE_TYPES.SPIKE);
+                } else {
+                    this.setTile(x, y, TILE_TYPES.STONE);
+                }
                 if(x == 0 || x == CHAMBER_WIDTH - 1 || y == 0 || y == CHAMBER_HEIGHT - 1) {
                     this.revealedTiles[x][y] = true;
                 }
@@ -61,7 +65,12 @@ class TileSystem {
         // Create evenly spaced holes - first hole is at (1,1), not (0,0)
         for(let x = 1; x < CHAMBER_WIDTH - 1; x+=2){
             for(let y = 1; y < CHAMBER_HEIGHT - 1; y+=2){
-                this.setTile(x, y, TILE_TYPES.AIR);
+                // 3% chance for coin, otherwise air
+                if (Math.random() < 0.03) {
+                    this.setTile(x, y, TILE_TYPES.COIN);
+                } else {
+                    this.setTile(x, y, TILE_TYPES.AIR);
+                }
             }
         }
         let visited = Array.from({ length: CHAMBER_WIDTH }, () => Array(CHAMBER_HEIGHT).fill(false)); // this is AI i have no idea why it works
@@ -88,7 +97,9 @@ class TileSystem {
             this.setTile(next[0] - vec[0], next[1] - vec[1], TILE_TYPES.AIR);
         }
         this.setTile(1, 1, TILE_TYPES.START_FLAG);
+        this.revealedTiles[1][1] = true;
         this.setTile(CHAMBER_WIDTH - 2, CHAMBER_HEIGHT - 2, TILE_TYPES.END_FLAG);
+        this.revealedTiles[CHAMBER_WIDTH - 2][CHAMBER_HEIGHT - 2] = true;
         this.setTile(CHAMBER_WIDTH - 1, CHAMBER_HEIGHT - 2, TILE_TYPES.AIR);
     }
 
@@ -166,15 +177,18 @@ class TileSystem {
         const endTileX = startTileX + Math.ceil(visibleWidth / this.tileSize) + 2;
         const endTileY = startTileY + Math.ceil(visibleHeight / this.tileSize) + 2;
 
-        // Render only visible and non-air tiles
+    // Render only visible and non-air tiles, but coins are always visible
         for (let tileX = startTileX; tileX <= endTileX; tileX++) {
             for (let tileY = startTileY; tileY <= endTileY; tileY++) {
-                if (
+                const tileType = this.getTile(tileX, tileY);
+                if (tileType === TILE_TYPES.COIN) {
+                    const worldPos = this.tileToWorld(tileX, tileY);
+                    this.renderTile(ctx, worldPos.x, worldPos.y, tileType);
+                } else if (
                     tileX >= 0 && tileX < this.revealedTiles.length &&
                     tileY >= 0 && tileY < this.revealedTiles[0].length &&
                     this.revealedTiles[tileX][tileY]
                 ) {
-                    const tileType = this.getTile(tileX, tileY);
                     if (tileType !== TILE_TYPES.AIR) {
                         const worldPos = this.tileToWorld(tileX, tileY);
                         this.renderTile(ctx, worldPos.x, worldPos.y, tileType);
