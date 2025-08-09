@@ -6,7 +6,7 @@ class Game {
     constructor() {
         this.camera = new Camera();
         this.tileSystem = new TileSystem();
-        this.player = new Player(this.tileSystem.tileToWorld(1, 1).x, this.tileSystem.tileToWorld(1, 1).y);
+        this.player = new Player(this.tileSystem.tileToWorld(1, 1, true).x, this.tileSystem.tileToWorld(1, 1, true).y);
         this.keys = {};
         this.init();
     }

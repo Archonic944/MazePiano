@@ -6,6 +6,7 @@ class TileSystem {
         this.tileSize = 32; // Same as player width/height
         this.sprites = {};
         this.tiles = {}; // Will store tiles as "x,y" -> tileType
+        this.revealedTiles = Array.from({ length: CHAMBER_WIDTH }, () => Array(CHAMBER_HEIGHT).fill(false));
         this.loadSprites();
         // this.generateSampleTiles();
         this.generateMaze();
@@ -32,6 +33,9 @@ class TileSystem {
         for (let x = 0; x < CHAMBER_WIDTH; x++) {
             for(let y = 0; y<CHAMBER_HEIGHT; y++){
                 this.setTile(x, y, TILE_TYPES.STONE);
+                if(x == 0 || x == CHAMBER_WIDTH - 1 || y == 0 || y == CHAMBER_HEIGHT - 1) {
+                    this.revealedTiles[x][y] = true;
+                }
             }
         }
 
@@ -53,13 +57,6 @@ class TileSystem {
                 !visited[x][y]
             );
         }
-
-        let vectors = [
-            [1, 0], 
-            [0, 1],
-            [-1, 0],
-            [0, -1]
-        ]
 
         // Create evenly spaced holes - first hole is at (1,1), not (0,0)
         for(let x = 1; x < CHAMBER_WIDTH - 1; x+=2){
@@ -142,10 +139,20 @@ class TileSystem {
         };
     }
 
-    tileToWorld(tileX, tileY) {
+    tileToWorld(tileX, tileY, centered = false) {
+        const baseX = tileX * this.tileSize;
+        const baseY = tileY * this.tileSize;
+
+        if (centered) {
+            return {
+                x: baseX + this.tileSize / 2,
+                y: baseY + this.tileSize / 2
+            };
+        }
+
         return {
-            x: tileX * this.tileSize,
-            y: tileY * this.tileSize
+            x: baseX,
+            y: baseY
         };
     }
 

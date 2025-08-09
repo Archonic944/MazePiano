@@ -4,11 +4,11 @@ class Player {
         this.y = y;
         this.spawnX = x;
         this.spawnY = y;
-    this.width = 32; // Sprite size
-    this.height = 32;
-    this.hitboxWidth = 24; // Hitbox size
-    this.hitboxHeight = 24;
-        this.speed = 500;
+        this.width = 32; // Sprite size
+        this.height = 32;
+        this.hitboxWidth = 20; // Hitbox size
+        this.hitboxHeight = 20;
+        this.speed = 270;
         this.direction = 'down';
         this.isMoving = false;
         this.animationTime = 0;
