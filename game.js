@@ -26,7 +26,7 @@ class Game {
     }
 
     update() {
-        this.player.update(this.keys);
+        this.player.update(this.keys, this.tileSystem);
         this.camera.follow(this.player);
     }
 
