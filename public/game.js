@@ -8,6 +8,8 @@ class Game {
         this.tileSystem = new TileSystem();
         this.player = new Player(this.tileSystem.tileToWorld(1, 1, true).x, this.tileSystem.tileToWorld(1, 1, true).y);
         this.keys = {};
+        this.lightOverlay = new Image();
+        this.lightOverlay.src = 'public/sprites/light_overlay_pngtree.png';
         this.init();
     }
 
@@ -40,26 +42,33 @@ class Game {
         
         this.renderBackground();
         this.tileSystem.render(ctx, this.camera);
+        this.renderLightOverlay();
         this.player.render(ctx);
         
         ctx.restore();
     }
 
-    renderBackground() {
-        const tileSize = 64;
-        const startX = Math.floor(this.camera.x / tileSize) * tileSize;
-        const startY = Math.floor(this.camera.y / tileSize) * tileSize;
-        const endX = startX + canvas.width + tileSize;
-        const endY = startY + canvas.height + tileSize;
-
-        ctx.fillStyle = '#2a2a2a';
-        for (let x = startX; x < endX; x += tileSize) {
-            for (let y = startY; y < endY; y += tileSize) {
-                ctx.fillRect(x, y, tileSize, tileSize);
-                ctx.strokeStyle = '#444';
-                ctx.strokeRect(x, y, tileSize, tileSize);
-            }
+    renderLightOverlay() {
+        if (this.lightOverlay && this.lightOverlay.complete) {
+            // Center overlay on player
+            const overlaySize = 192;
+            ctx.save();
+            ctx.globalAlpha = 0.7; // Slight transparency
+            ctx.drawImage(
+                this.lightOverlay,
+                this.player.x - overlaySize / 2,
+                this.player.y - overlaySize / 2,
+                overlaySize,
+                overlaySize
+            );
+            ctx.globalAlpha = 1.0;
+            ctx.restore();
         }
+    }
+
+    renderBackground() {
+        ctx.fillStyle = '#000';
+        ctx.fillRect(this.camera.x, this.camera.y, canvas.width / this.camera.zoom, canvas.height / this.camera.zoom);
     }
 
     gameLoop() {

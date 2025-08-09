@@ -12,6 +12,9 @@ class Player {
         this.direction = 'down';
         this.isMoving = false;
         this.animationTime = 0;
+        this.isDead = false;
+        this.deathTime = 0;
+        this.deathFlashDuration = 0.3;
         this.sprites = {};
         this.deathSound = new Audio('public/sounds/death_sfx.mp3');
         this.loadSprites();
@@ -34,6 +37,18 @@ class Player {
 
     update(keys, tileSystem) {
         const deltaTime = 1/60;
+        
+        if (this.isDead) {
+            this.deathTime += deltaTime;
+            if (this.deathTime >= this.deathFlashDuration) {
+                this.isDead = false;
+                this.deathTime = 0;
+                this.x = this.spawnX;
+                this.y = this.spawnY;
+            }
+            return; // Skip normal update during death animation
+        }
+        
         this.isMoving = false;
 
         let dx = 0;
@@ -69,6 +84,23 @@ class Player {
         }
         if (!this.checkWallCollision(this.x, newY, tileSystem)) {
             this.y = newY;
+        }
+
+        // Reveal adjacent wall tiles while moving
+        if (this.isMoving) {
+            const tilePos = tileSystem.worldToTile(this.x, this.y);
+            for (let i = 0; i < 4; i++) {
+                const adjX = tilePos.x + vectors[i][0];
+                const adjY = tilePos.y + vectors[i][1];
+                if (
+                    adjX >= 0 && adjX < tileSystem.revealedTiles.length &&
+                    adjY >= 0 && adjY < tileSystem.revealedTiles[0].length
+                ) {
+                    if (tileSystem.getTile(adjX, adjY) === TILE_TYPES.STONE) {
+                        tileSystem.revealedTiles[adjX][adjY] = true;
+                    }
+                }
+            }
         }
 
         // Check for spike collision after movement
@@ -124,32 +156,72 @@ class Player {
                 return true; // Collision detected
             }
         }
-        return false; // No collision
+        return false;
     }
 
     checkSpikeCollision(tileSystem) {
-        // Check player's hitbox center for spike collision
+        // Skip collision check if already dead
+        if (this.isDead) return;
+        
         const centerX = this.x;
         const centerY = this.y;
         const tilePos = tileSystem.worldToTile(centerX, centerY);
         const tileType = tileSystem.getTile(tilePos.x, tilePos.y);
         if (tileType === TILE_TYPES.SPIKE) {
+            // Reveal spike tile only after collision
+            if (
+                tilePos.x >= 0 && tilePos.x < tileSystem.revealedTiles.length &&
+                tilePos.y >= 0 && tilePos.y < tileSystem.revealedTiles[0].length
+            ) {
+                tileSystem.revealedTiles[tilePos.x][tilePos.y] = true;
+            }
             this.die();
         }
     }
 
     die() {
+        // Skip if already dead to prevent repeated calls
+        if (this.isDead) return;
+        
+        // Set death state
+        this.isDead = true;
+        this.deathTime = 0;
+        
         // Play death sound
         this.deathSound.currentTime = 0; // Reset sound to beginning
         this.deathSound.play().catch(e => console.log('Could not play death sound:', e));
-        
-        // Teleport back to spawn
-        this.x = this.spawnX;
-        this.y = this.spawnY;
     }
 
     render(ctx) {
         const sprite = this.getCurrentSprite();
+        
+        if (this.isDead) {
+            ctx.save();
+            // Draw red overlay for death effect
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+            const screenSize = 2000; // Large enough to cover screen
+            ctx.fillRect(
+                this.x - screenSize/2,
+                this.y - screenSize/2,
+                screenSize,
+                screenSize
+            );
+            
+            if (sprite && sprite.complete) {
+                if (this.direction === 'left') {
+                    ctx.scale(-1, 1);
+                    ctx.drawImage(sprite, -this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
+                } else {
+                    ctx.drawImage(sprite, this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
+                }
+            } else {
+                ctx.fillStyle = '#ff6b6b';
+                ctx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
+            }
+            ctx.restore();
+            return;
+        }
+        
         if (sprite && sprite.complete) {
             ctx.save();
             // Center sprite on hitbox

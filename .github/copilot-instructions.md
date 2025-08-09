@@ -24,6 +24,8 @@ public/
 │   ├── Player sprites: idle_down.png, idle_right.png, idle_up.png
 │   ├── Walking animations: walk_down.png, walk_down_2.png, walk_right_1.png, etc.
 │   ├── Tile sprites: stone.png, coin.png, spike.png, spike-ball.png
+│   ├── UI elements: banner_green.png, banner_red.png (start/end flags)
+│   └── Effects: light_overlay_pngtree.png (lighting effect behind player)
 └── sounds/
     ├── coin_sfx.mp3
     └── death_sfx.mp3
@@ -39,13 +41,15 @@ public/
 - `camera` - Camera instance
 - `tileSystem` - TileSystem instance
 - `keys` - Object tracking pressed keys
+- `lightOverlay` - Image for the light effect rendered behind the player
 
 **Key Methods**:
 - `init()` - Initializes event listeners and starts game loop
 - `bindEvents()` - Sets up keyboard input handling
 - `update()` - Updates all game systems each frame
 - `render()` - Renders all visual elements with camera transformations
-- `renderBackground()` - Draws the grid background pattern
+- `renderBackground()` - Fills the background with solid black color
+- `renderLightOverlay()` - Renders the light effect centered on player
 - `gameLoop()` - Main game loop using requestAnimationFrame
 
 **Canvas Context**: Uses global `canvas` and `ctx` variables for rendering.
@@ -57,11 +61,14 @@ public/
 - `x, y` - World position coordinates (center of player)
 - `spawnX, spawnY` - Original spawn position for respawning
 - `width, height` - Player sprite dimensions (32x32 pixels)
-- `hitboxWidth, hitboxHeight` - Player collision hitbox dimensions (24x24 pixels, smaller than sprite)
-- `speed` - Movement speed in pixels per second (200)
+- `hitboxWidth, hitboxHeight` - Player collision hitbox dimensions (20x20 pixels, smaller than sprite)
+- `speed` - Movement speed in pixels per second (270)
 - `direction` - Current facing direction ('up', 'down', 'left', 'right')
 - `isMoving` - Boolean tracking movement state
 - `animationTime` - Timer for sprite animation frames
+- `isDead` - Boolean tracking death state
+- `deathTime` - Timer for death animation
+- `deathFlashDuration` - Duration of death animation in seconds
 - `sprites` - Object storing loaded sprite images
 - `deathSound` - Audio object for death sound effect
 
@@ -84,8 +91,11 @@ public/
 
 **Death/Respawn System**:
 - Player dies when touching spike tiles
+- Death state is set (isDead = true)
 - Death plays `death_sfx.mp3` sound effect
-- Player teleports back to spawn position (constructor x,y values)
+- Screen flashes red for a brief period (deathFlashDuration)
+- Controls are disabled during death animation
+- After animation completes, player teleports back to spawn position
 
 **Animation System**: 
 - Idle sprites for each direction
@@ -115,15 +125,17 @@ public/
 - `tileSize` - Size of each tile in pixels (32, matching player size)
 - `sprites` - Object storing tile sprite images
 - `tiles` - Map storing tile data as "x,y" -> tileType
+- `revealedTiles` - 2D array tracking which tiles are visible to the player
 
 **Key Methods**:
 - `loadSprites()` - Loads tile sprites (stone.png, coin.png, spike.png)
 - `generateSampleTiles()` - Creates demo level with walls, coins, and spikes
+- `generateMaze()` - Generates a maze using randomized depth-first search, sets up walls, air tiles, start/end flags, and revealed edges
 - `setTile(x, y, tileType)` - Places/removes tiles at grid coordinates
 - `getTile(x, y)` - Returns tile type at grid coordinates
 - `worldToTile(worldX, worldY)` - Converts world position to tile coordinates
 - `tileToWorld(tileX, tileY)` - Converts tile coordinates to world position
-- `render(ctx, camera)` - Efficiently renders only visible tiles
+- `render(ctx, camera)` - Efficiently renders only visible and revealed tiles
 - `renderTile(ctx, x, y, tileType)` - Renders individual tile with sprite or fallback
 
 **Optimization**: Only renders tiles visible in current camera view to maintain performance.
@@ -134,13 +146,16 @@ public/
 - `STONE: 1` - Solid wall tile
 - `COIN: 2` - Collectible coin tile
 - `SPIKE: 3` - Hazard spike tile
+- `START_FLAG: 4` - Starting point tile
+- `END_FLAG: 5` - End point tile
 
 ## Rendering Pipeline
 
 ### Render Order (back to front):
-1. **Background Grid** - Tiled pattern for visual reference
-2. **Tiles** - Stone walls, coins, spikes from TileSystem
-3. **Player** - Character sprite with animations
+1. **Background** - Solid black background
+2. **Tiles** - Stone walls, coins, spikes from TileSystem (only revealed tiles)
+3. **Light Overlay** - Glowing light effect centered on player
+4. **Player** - Character sprite with animations
 
 ### Camera Transformations:
 1. Clear canvas
@@ -172,12 +187,22 @@ public/
 - Canvas pixel positions after camera transformation
 - Handled automatically by canvas context transformations
 
+## Visibility System
+
+### Tile Revealing Mechanics
+- **Wall Revealing**: Adjacent wall (STONE) tiles are automatically revealed as the player moves
+- **Spike Revealing**: Spike tiles are only revealed after the player dies from stepping on them
+- **Initial Visibility**: Only border walls and starting area are initially visible
+- **Implementation**: Uses `revealedTiles` 2D array in `TileSystem` class to track visibility state
+- **Rendering Control**: Only revealed tiles are rendered in the render method
+
 ## Performance Considerations
 
 ### Tile Culling
 - Only renders tiles visible in camera viewport
 - Calculates visible tile range based on camera position and zoom
 - Prevents unnecessary rendering of off-screen tiles
+- Further optimized by only rendering revealed tiles
 
 ### Sprite Loading
 - Sprites loaded asynchronously
