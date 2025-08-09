@@ -1,5 +1,5 @@
-const CHAMBER_WIDTH = 100;
-const CHAMBER_HEIGHT = 50;
+const CHAMBER_WIDTH = 99;
+const CHAMBER_HEIGHT = 49;
 
 class TileSystem {
     constructor() {
@@ -25,10 +25,69 @@ class TileSystem {
         });
     }
 
-    
-
     generateMaze() {
+        // Fill chamber with stone
+        for (let x = 0; x < CHAMBER_WIDTH; x++) {
+            for(let y = 0; y<CHAMBER_HEIGHT; y++){
+                this.setTile(x, y, TILE_TYPES.STONE);
+            }
+        }
+
+        let getAdjacent = function(tile){ // Times two because air tiles are at odd coordinates
+            const [x, y] = tile;
+            return [
+                [x + 2, y],
+                [x, y + 2],
+                [x - 2, y],
+                [x, y - 2]
+            ]
+        }
+
+        let filterTile = function(tile){ // Filter by in bounds and not visited
+            const [x, y] = tile;
+            return (
+                x >= 0 && x < CHAMBER_WIDTH &&
+                y >= 0 && y < CHAMBER_HEIGHT &&
+                !visited[x][y]
+            );
+        }
+
+        let vectors = [
+            [1, 0], 
+            [0, 1],
+            [-1, 0],
+            [0, -1]
+        ]
         
+        // Create evenly spaced holes - first hole is at (1,1), not (0,0)
+        for(let x = 1; x < CHAMBER_WIDTH - 1; x+=2){
+            for(let y = 1; y < CHAMBER_HEIGHT - 1; y+=2){
+                this.setTile(x, y, TILE_TYPES.AIR);
+            }
+        }
+        let visited = Array.from({ length: CHAMBER_WIDTH }, () => Array(CHAMBER_HEIGHT).fill(false)); // this is AI i have no idea why it works
+        let initialCell = [1,1];
+        visited[initialCell[0]][initialCell[1]] = true;
+        let stack = [initialCell];
+        outer: while(stack.length > 0) {
+            let current = stack.pop();
+            let adjacent = getAdjacent(current);
+            let index = Math.floor(Math.random() * adjacent.length);
+            let skipCount = 0;
+            while(!filterTile(adjacent[index])) {
+                index = (index + 1) % adjacent.length;
+                skipCount++;
+                if(skipCount >= adjacent.length) {
+                    continue outer; // No valid adjacent tiles, skip to next iteration
+                }
+            }
+            stack.push(current);
+            let next = adjacent[index];
+            visited[next[0]][next[1]] = true;
+            stack.push(next);
+            let vec = vectors[index];
+            this.setTile(next[0] - vec[0], next[1] - vec[1], TILE_TYPES.AIR);
+        }
     }
 
 
