@@ -254,19 +254,46 @@ class Player {
     }
   }
 
-  die() {
+die() {
+    // Skip if already dead to prevent repeated calls
+    if (this.isDead) return;
+    
+    // Set death state
+    this.isDead = true;
+    this.deathTime = 0;
+    
     // Play death sound
     this.deathSound.currentTime = 0; // Reset sound to beginning
-    this.deathSound
-      .play()
-      .catch((e) => console.log("Could not play death sound:", e));
-
-    // Teleport back to spawn
-    this.x = this.spawnX;
-    this.y = this.spawnY;
-  }
+    this.deathSound.play().catch(e => console.log('Could not play death sound:', e));
+}
 
   render(ctx) {
+    if (this.isDead) {
+            ctx.save();
+            // Draw red overlay for death effect
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+            const screenSize = 2000; // Large enough to cover screen
+            ctx.fillRect(
+                this.x - screenSize/2,
+                this.y - screenSize/2,
+                screenSize,
+                screenSize
+            );
+            
+            if (sprite && sprite.complete) {
+                if (this.direction === 'left') {
+                    ctx.scale(-1, 1);
+                    ctx.drawImage(sprite, -this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
+                } else {
+                    ctx.drawImage(sprite, this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
+                }
+            } else {
+                ctx.fillStyle = '#ff6b6b';
+                ctx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
+            }
+            ctx.restore();
+            return;
+     }
     const sprite = this.getCurrentSprite();
     if (sprite && sprite.complete) {
       ctx.save();
