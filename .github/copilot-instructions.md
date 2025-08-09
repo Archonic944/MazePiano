@@ -54,9 +54,10 @@ public/
 **Purpose**: Handles player character movement, animation, and rendering.
 
 **Key Properties**:
-- `x, y` - World position coordinates
+- `x, y` - World position coordinates (center of player)
 - `spawnX, spawnY` - Original spawn position for respawning
-- `width, height` - Player dimensions (32x32 pixels)
+- `width, height` - Player sprite dimensions (32x32 pixels)
+- `hitboxWidth, hitboxHeight` - Player collision hitbox dimensions (24x24 pixels, smaller than sprite)
 - `speed` - Movement speed in pixels per second (200)
 - `direction` - Current facing direction ('up', 'down', 'left', 'right')
 - `isMoving` - Boolean tracking movement state
@@ -67,17 +68,17 @@ public/
 **Key Methods**:
 - `loadSprites()` - Loads all player sprite images from public/sprites/
 - `update(keys, tileSystem)` - Processes input, updates position/animation, and checks collisions
-- `checkWallCollision(x, y, tileSystem)` - Returns true if position would collide with stone tiles
-- `checkSpikeCollision(tileSystem)` - Checks for spike collision and triggers death
+- `checkWallCollision(x, y, tileSystem)` - Returns true if position would collide with stone tiles (uses hitbox size for collision)
+- `checkSpikeCollision(tileSystem)` - Checks for spike collision at hitbox center and triggers death
 - `die()` - Plays death sound and teleports player back to spawn
 - `getCurrentSprite()` - Returns appropriate sprite based on direction and movement
-- `render(ctx)` - Draws player with correct sprite and flipping for left direction
+- `render(ctx)` - Draws player sprite centered on hitbox, with flipping for left direction
 
 **Input Handling**: Responds to WASD and arrow keys for movement.
 
 **Collision System**:
-- Wall collision: Checks all four corners of player bounding box against stone tiles
-- Spike collision: Checks player center position against spike tiles
+- Wall collision: Checks all four corners of player hitbox (24x24) against stone tiles, allowing player to fit through 1-tile-wide gaps
+- Spike collision: Checks player hitbox center position against spike tiles
 - Movement is prevented if collision with walls would occur
 - Spike collision triggers immediate death and respawn
 
@@ -201,6 +202,7 @@ public/
 - Add new sprites to `loadSprites()` if needed
 - Update `getCurrentSprite()` for new animations
 - Consider adding new properties for state tracking
+- If changing collision behavior, update `hitboxWidth`/`hitboxHeight` and collision methods to match desired gameplay
 
 ### Camera Enhancements
 - Adjust `zoom` property for different zoom levels

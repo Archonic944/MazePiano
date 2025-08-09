@@ -4,8 +4,10 @@ class Player {
         this.y = y;
         this.spawnX = x;
         this.spawnY = y;
-        this.width = 32;
-        this.height = 32;
+    this.width = 32; // Sprite size
+    this.height = 32;
+    this.hitboxWidth = 24; // Hitbox size
+    this.hitboxHeight = 24;
         this.speed = 200;
         this.direction = 'down';
         this.isMoving = false;
@@ -106,33 +108,31 @@ class Player {
     }
 
     checkWallCollision(x, y, tileSystem) {
-        // Check all four corners of the player
+        // Check all four corners of the hitbox (smaller than sprite)
+        const halfW = this.hitboxWidth / 2;
+        const halfH = this.hitboxHeight / 2;
         const corners = [
-            { x: x, y: y }, // Top-left
-            { x: x + this.width - 1, y: y }, // Top-right
-            { x: x, y: y + this.height - 1 }, // Bottom-left
-            { x: x + this.width - 1, y: y + this.height - 1 } // Bottom-right
+            { x: x - halfW, y: y - halfH }, // Top-left
+            { x: x + halfW, y: y - halfH }, // Top-right
+            { x: x - halfW, y: y + halfH }, // Bottom-left
+            { x: x + halfW, y: y + halfH } // Bottom-right
         ];
-
         for (let corner of corners) {
             const tilePos = tileSystem.worldToTile(corner.x, corner.y);
             const tileType = tileSystem.getTile(tilePos.x, tilePos.y);
-            
             if (tileType === TILE_TYPES.STONE) {
                 return true; // Collision detected
             }
         }
-        
         return false; // No collision
     }
 
     checkSpikeCollision(tileSystem) {
-        // Check player's center position for spike collision
-        const centerX = this.x + this.width / 2;
-        const centerY = this.y + this.height / 2;
+        // Check player's hitbox center for spike collision
+        const centerX = this.x;
+        const centerY = this.y;
         const tilePos = tileSystem.worldToTile(centerX, centerY);
         const tileType = tileSystem.getTile(tilePos.x, tilePos.y);
-        
         if (tileType === TILE_TYPES.SPIKE) {
             this.die();
         }
@@ -152,18 +152,17 @@ class Player {
         const sprite = this.getCurrentSprite();
         if (sprite && sprite.complete) {
             ctx.save();
-            
+            // Center sprite on hitbox
             if (this.direction === 'left') {
                 ctx.scale(-1, 1);
-                ctx.drawImage(sprite, -this.x - this.width, this.y, this.width, this.height);
+                ctx.drawImage(sprite, -this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
             } else {
-                ctx.drawImage(sprite, this.x, this.y, this.width, this.height);
+                ctx.drawImage(sprite, this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
             }
-            
             ctx.restore();
         } else {
             ctx.fillStyle = '#ff6b6b';
-            ctx.fillRect(this.x, this.y, this.width, this.height);
+            ctx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
         }
     }
 }

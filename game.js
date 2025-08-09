@@ -1,4 +1,5 @@
 const canvas = document.getElementById('gameCanvas');
+console.log("hello gabe")
 const ctx = canvas.getContext('2d');
 
 class Game {
