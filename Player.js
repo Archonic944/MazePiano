@@ -108,8 +108,6 @@ class Player {
     }
 
     checkWallCollision(x, y, tileSystem) {
-        // TODO DEBUG
-        return false;
         // Check all four corners of the hitbox (smaller than sprite)
         const halfW = this.hitboxWidth / 2;
         const halfH = this.hitboxHeight / 2;

@@ -2,8 +2,7 @@ class Camera {
     constructor() {
         this.x = 0;
         this.y = 0;
-        //this.zoom = 1.5;
-        this.zoom = 0.3; //debug
+        this.zoom = 1.5;
         this.smoothing = 0.1;
     }
 
