@@ -12,16 +12,12 @@ class Player {
     this.isDead = false;
     this.deathTime = 0;
     this.deathFlashDuration = 0.3;
-    this.role;
-    this.socket;
-    this.ready = false;
     this.direction = "down";
     this.isMoving = false;
     this.animationTime = 0;
     this.sprites = {};
     this.deathSound = new Audio("public/sounds/death_sfx.mp3");
     this.loadSprites();
-    this.loadWebsockets();
   }
 
   loadSprites() {
@@ -44,31 +40,8 @@ class Player {
     });
   }
 
-  loadWebsockets() {
-    this.socket = new WebSocket("/room/");
-
-    this.socket.addEventListener("open", (event) => {
-      this.ready = true;
-    });
-
-    this.socket.addEventListener("message", (e) => {
-      const { event, data } = JSON.parse(e.data);
-      switch (event) {
-        case "role": {
-          this.role = data;
-          break;
-        }
-        case "location": {
-          this.x = data.x;
-          this.y = data.y;
-          break;
-        }
-      }
-    });
-  }
-
   update(keys, tileSystem) {
-    if (!this.role || !this.ready) {
+    if (!role || !ready) {
       return;
     }
     const deltaTime = 1 / 60;
@@ -91,14 +64,14 @@ class Player {
     let goingLeft;
     let goingRight;
 
-    if (this.role == "mover") {
+    if (role == "mover") {
       goingUp = keys["KeyW"] || keys["ArrowUp"];
       goingDown = keys["KeyS"] || keys["ArrowDown"];
       goingLeft = keys["KeyA"] || keys["ArrowLeft"];
       goingRight = keys["KeyD"] || keys["ArrowRight"];
     }
 
-    if (this.role == "pianist") {
+    if (role == "pianist") {
       return;
     }
     if (goingUp) {
@@ -161,7 +134,7 @@ class Player {
       this.animationTime = 0;
     }
 
-    this.socket.send(
+    socket.send(
       JSON.stringify({ event: "location", data: { x: this.x, y: this.y } })
     );
   }
@@ -254,46 +227,65 @@ class Player {
     }
   }
 
-die() {
+  die() {
     // Skip if already dead to prevent repeated calls
     if (this.isDead) return;
-    
+
     // Set death state
     this.isDead = true;
     this.deathTime = 0;
-    
+
     // Play death sound
     this.deathSound.currentTime = 0; // Reset sound to beginning
-    this.deathSound.play().catch(e => console.log('Could not play death sound:', e));
-}
+    this.deathSound
+      .play()
+      .catch((e) => console.log("Could not play death sound:", e));
+  }
 
   render(ctx) {
     if (this.isDead) {
-            ctx.save();
-            // Draw red overlay for death effect
-            ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
-            const screenSize = 2000; // Large enough to cover screen
-            ctx.fillRect(
-                this.x - screenSize/2,
-                this.y - screenSize/2,
-                screenSize,
-                screenSize
-            );
-            
-            if (sprite && sprite.complete) {
-                if (this.direction === 'left') {
-                    ctx.scale(-1, 1);
-                    ctx.drawImage(sprite, -this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
-                } else {
-                    ctx.drawImage(sprite, this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
-                }
-            } else {
-                ctx.fillStyle = '#ff6b6b';
-                ctx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
-            }
-            ctx.restore();
-            return;
-     }
+      ctx.save();
+      // Draw red overlay for death effect
+      ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
+      const screenSize = 2000; // Large enough to cover screen
+      ctx.fillRect(
+        this.x - screenSize / 2,
+        this.y - screenSize / 2,
+        screenSize,
+        screenSize
+      );
+
+      if (sprite && sprite.complete) {
+        if (this.direction === "left") {
+          ctx.scale(-1, 1);
+          ctx.drawImage(
+            sprite,
+            -this.x - this.width / 2,
+            this.y - this.height / 2,
+            this.width,
+            this.height
+          );
+        } else {
+          ctx.drawImage(
+            sprite,
+            this.x - this.width / 2,
+            this.y - this.height / 2,
+            this.width,
+            this.height
+          );
+        }
+      } else {
+        ctx.fillStyle = "#ff6b6b";
+        ctx.fillRect(
+          this.x - this.width / 2,
+          this.y - this.height / 2,
+          this.width,
+          this.height
+        );
+      }
+      ctx.restore();
+      return;
+    }
     const sprite = this.getCurrentSprite();
     if (sprite && sprite.complete) {
       ctx.save();

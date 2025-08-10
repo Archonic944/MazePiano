@@ -11,6 +11,15 @@ export class Server extends DurableObject {
       let meta = webSocket.deserializeAttachment();
       this.sessions.set(webSocket, { ...meta });
     });
+    this.tileSystem = null;
+    this.ready = this.state.blockConcurrencyWhile(async () => {
+      try {
+        const storedTileSystem = await this.storage.get("tileSystem");
+        if (storedTileSystem) {
+          this.tileSystem = storedTileSystem;
+        }
+      } catch (err) {}
+    });
   }
 
   getSocketByRole(role) {
@@ -21,6 +30,8 @@ export class Server extends DurableObject {
   }
 
   async fetch() {
+    // Ensure persistent state (tileSystem) is loaded before handling the session
+    if (this.ready) await this.ready;
     let pair = new WebSocketPair();
 
     await this.handleSession(pair[1]);
@@ -36,6 +47,7 @@ export class Server extends DurableObject {
   }
 
   async handleSession(ws) {
+    if (this.ready) await this.ready;
     this.state.acceptWebSocket(ws);
 
     let session = {};
@@ -44,7 +56,15 @@ export class Server extends DurableObject {
       session.role = "mover";
       ws.serializeAttachment({ role: "mover" });
       this.sessions.set(ws, session);
-      ws.send(JSON.stringify({ event: "role", data: "mover" }));
+      ws.send(
+        JSON.stringify({
+          event: "init",
+          data: {
+            role: "mover",
+            tileSystem: this.tileSystem,
+          },
+        })
+      );
       return;
     }
 
@@ -52,7 +72,12 @@ export class Server extends DurableObject {
       session.role = "pianist";
       ws.serializeAttachment({ role: "pianist" });
       this.sessions.set(ws, session);
-      ws.send(JSON.stringify({ event: "role", data: "pianist" }));
+      ws.send(
+        JSON.stringify({
+          event: "init",
+          data: { role: "pianist", tileSystem: this.tileSystem },
+        })
+      );
       return;
     }
   }
@@ -66,6 +91,7 @@ export class Server extends DurableObject {
   }
 
   async webSocketMessage(ws, message, env) {
+    if (this.ready) await this.ready;
     const { event, data } = JSON.parse(message);
     const mover = this.getSocketByRole("mover");
     const pianist = this.getSocketByRole("pianist");
@@ -82,6 +108,10 @@ export class Server extends DurableObject {
           pianist.send(JSON.stringify({ event: "location", data }));
         }
         break;
+      }
+      case "tilemap": {
+        this.tileSystem = data;
+        await this.storage.put("tileSystem", data);
       }
     }
   }
